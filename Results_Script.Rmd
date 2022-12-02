@@ -1,0 +1,196 @@
+---
+title: "FishID_spectraST"
+author: "Madhu"
+date: "14 1 2021"
+output:
+  pdf_document: default
+editor_options: 
+  chunk_output_type: console
+---
+#Packages
+```{r}
+#load file
+#install.packages("readxl")
+library(readxl)
+library(tidyverse)
+#install.packages("XLConnect")
+library("XLConnect")
+library("hablar")
+library("pacman")
+library("data.table")
+```
+#File spectific results
+Hyse
+```{r}
+file1 <- "D:/FishID/out/1_hyse/8B.pep.xls"
+data1 <- as.data.table(read.csv2(file=file1,sep="\t"))
+data1 <- data1 %>% retype()
+data1_filt<-data1 %>% filter(dot > 0.8)
+nrow(data1_filt)
+data1_filt$fish
+A1<-nrow(data1_filt)
+```
+Tilapia
+```{r}
+file2 <- "D:/FishID/out/2_tilapia/8B.pep.xls"
+data2 <- as.data.table(read.csv2(file=file2,sep="\t"))
+data2 <- data2 %>% retype()
+data2_filt<-data2 %>% filter(dot > 0.8)
+nrow(data2_filt)
+A2<-nrow(data2_filt)
+```
+Cod
+```{r}
+file3 <- "D:/FishID/out/3_cod/8B.pep.xls"
+data3 <- as.data.table(read.csv2(file=file3,sep="\t"))
+data3 <- data3 %>% retype()
+data3_filt<-data3 %>% filter(dot > 0.8)
+nrow(data3_filt)
+A3<-nrow(data3_filt)
+A3
+```
+Salmon
+```{r}
+file4 <- "D:/FishID/out/4_salmon/8B.pep.xls"
+data4 <- as.data.table(read.csv2(file=file4,sep="\t"))
+data4 <- data4 %>% retype()
+data4_filt<-data4 %>% filter(dot > 0.8)
+nrow(data4_filt)
+A4<-nrow(data4_filt)
+A4
+```
+Gjedde
+```{r}
+file5 <- "D:/FishID/out/5_gjedde/8B.pep.xls"
+data5 <- as.data.table(read.csv2(file=file5,sep="\t"))
+data5 <- data5 %>% retype()
+data5_filt<-data5 %>% filter(dot > 0.8)
+nrow(data5_filt)
+A5<-nrow(data5_filt)
+A5
+```
+Pangasius
+```{r}
+file6 <- "D:/FishID/out/6_pangasius/8B.pep.xls"
+data6 <- as.data.table(read.csv2(file=file6,sep="\t"))
+data6 <- data6 %>% retype()
+data6_filt<-data6 %>% filter(dot > 0.8)
+nrow(data6_filt)
+A6<-nrow(data6_filt)
+A6
+```
+Platy
+```{r}
+file7 <- "D:/FishID/out/7_platy/8B.pep.xls"
+data7 <- as.data.table(read.csv2(file=file7,sep="\t"))
+data7 <- data7 %>% retype()
+data7_filt<-data7 %>% filter(dot > 0.8)
+nrow(data7_filt)
+A7<-nrow(data7_filt)
+A7
+```
+Result Table
+```{r}
+
+```
+Comparing spectraID
+Refernece "https://www.biostars.org/p/180451/"
+```{r}
+library(plyr)
+library(tidyverse)
+library(sqldf)
+library(UpSetR)
+#Alternate code
+a1<-data1_filt$spectrum
+a2<-data2_filt$spectrum
+C1<-a1[a1 %in% a2]
+C2<-a1[!(a1 %in% a2)]
+#Josef's code
+#Modification of dataset
+data1_filt_sub<-data1_filt %>% mutate(dot = "Haddock") %>% select(spectrum, dot)
+data2_filt_sub<-data2_filt %>% mutate(dot = "Tilapia") %>% select(spectrum, dot)
+data3_filt_sub<-data3_filt %>% mutate(dot = "Cod") %>% select(spectrum, dot)
+data4_filt_sub<-data4_filt %>% mutate(dot = "Salmon") %>% select(spectrum, dot)
+data5_filt_sub<-data5_filt %>% mutate(dot = "Pike") %>% select(spectrum, dot)
+data6_filt_sub<-data6_filt %>% mutate(dot = "Pangasius") %>% select(spectrum, dot)
+data7_filt_sub<-data7_filt %>% mutate(dot = "Platy") %>% select(spectrum, dot)
+#Merge
+All<-rbind(data1_filt_sub, data2_filt_sub, data3_filt_sub, data4_filt_sub, data5_filt_sub, data6_filt_sub, data7_filt_sub)
+#From upset
+#New part of code to identify distinct spectra
+Haddock<-All %>% select (spectrum, dot)%>% filter (dot == "Haddock")%>% collect()
+Tilapia<-All %>% select (spectrum, dot)%>% filter (dot == "Tilapia")%>% collect()
+Cod<-All %>% select (spectrum, dot)%>% filter (dot == "Cod")%>% collect()
+Salmon<-All %>% select (spectrum, dot)%>% filter (dot == "Salmon")%>% collect()
+Pike<-All %>% select (spectrum, dot)%>% filter (dot == "Pike")%>% collect()
+Pangasius<-All %>% select (spectrum, dot)%>% filter (dot == "Pangasius")%>% collect()
+Platy<-All %>% select (spectrum, dot)%>% filter (dot == "Platy")%>% collect()
+
+# Collect names in a list and rename that list 
+obs <- c(Haddock, Tilapia, Cod, Salmon, Pike, Pangasius, Platy)
+#Alternat option
+#All_fish<- c(data1_filt_sub, data2_filt_sub, data3_filt_sub, data4_filt_sub, data5_filt_sub, data6_filt_sub, data7_filt_sub)
+names(obs)<-c("Haddock", "Tilapia", "Cod", "Salmon", "Pike", "Pangasius", "Platy")
+
+obs_df <- plyr::ldply(All, data.frame)
+
+UpSetR::upset(UpSetR::fromList(obs_df), order.by = "freq", keep.order = TRUE)
+```
+Josef's Script 
+For Upset 
+```{r}
+# Extract names for vennlist
+feedtps_nms <- rawdat %>% select(name, feed) %>% filter (feed == "YES") %>% distinct(name) %>% collect()
+
+laboxtps_nms <- rawdat %>% select(name, labox) %>% filter (labox == "YES") %>% distinct(name) %>% collect()
+fisheq0tps_nms <- rawdat %>% select(name, fish_eq0) %>% filter (fish_eq0 == "YES") %>% distinct(name) %>% collect()
+
+ 
+fisheq2tps_nms <- rawdat %>% select(name, fish_eq2) %>% filter (fish_eq2 == "YES") %>% distinct(name) %>% collect()
+
+fisheq3tps_nms <- rawdat %>% select(name, fish_eq3) %>% filter (fish_eq3 == "YES") %>% distinct(name) %>% collect()
+
+fisheq3tps_nms <- rawdat %>% 
+  select(name, fish_eq3) %>% 
+  filter (fish_eq3 == "YES") %>% 
+  distinct(name) %>% 
+  collect()
+comfishtps_cnt <- rawdat %>% 
+  select(name, fish_com) %>% 
+  filter (fish_com == "YES") %>% 
+  distinct(name) %>% 
+  collect()
+# Collect names in a list and rename that list 
+obs <- c(laboxtps_nms, 
+         feedtps_nms, 
+         fisheq0tps_nms, fisheq2tps_nms, fisheq3tps_nms, 
+         comfishtps_cnt)
+
+names(obs) <- c("laboxtps", 
+                "feedtps", 
+                "fisheq0tps", "fisheq2tps", "fisheq3tps",
+                "comfishtps")
+obs_df <- plyr::ldply(obs, data.frame) %>% 
+  rename(group = ".id", eqtp = "X..i..") %>% 
+  rownames_to_column("id") %>% 
+  pivot_wider(names_from = group, values_from = eqtp) %>% 
+  select(-id) %>% 
+  rename(LabOx=laboxtps, Feed=feedtps, ESFD0=fisheq0tps, ESFD2=fisheq2tps, ESFD3=fisheq3tps, CS=comfishtps)
+  
+UpSetR::upset(UpSetR::fromList(obs_df), sets = c("CS", "ESFD0", "ESFD2", "ESFD3", "Feed", "LabOx"), order.by = "freq", keep.order = TRUE, nsets = 6)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
