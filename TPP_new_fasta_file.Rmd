@@ -1,0 +1,116 @@
+---
+title: "TPP_Fish29"
+author: "Madhu"
+date: "20 7 2021"
+output:
+  word_document: default
+  html_document: default
+---
+This test run was to evalute efficiancy inhouse machine for food safety proteomics.
+Insect samples from 2019 were used in this study and outcome was copare with the same data. 
+libraries 
+```{r}
+library(PTXQC) # MQ QC
+library(XML)
+library(tidyverse) # Data handling
+library(PTXQC) # MQ QC
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+#library(proteus) # MQ statistics
+```
+# Download the fasta files.
+
+#Comet search 
+For running search for each species FASTA file will change but paramet
+```{r}
+COMET_PARAMETERS <- 'D:/params/comet.params'
+FASTA_FILE <- 'D:/Spectral_library/fish_library/probe_fish29/FASTA/uniprot-UP000000437_2-2022.11.18.fasta'
+```
+## Perform database search
+Here we simply call the defined search engine with the defined parameters on each data file separately.
+```{r}
+mzML_files <- "D:/Spectral_library/fish_library/probe_fish29/mzML"
+mzML_list <- dir(mzML_files, full.names = TRUE)
+for(x in mzML_list) system(paste('comet', ' -P', COMET_PARAMETERS, ' -N', sub('\\.mzML$',
+                                  '', x), ' -D', FASTA_FILE, ' ', x, sep = ''))
+```
+## Run peptide prophet and protein prophet in gui
+##  ProteinProphet results
+```{r}
+ProteinProphet<-"D:/Spectral_library/fish_library/probe_fish29/mzML"
+ProteinProphet_files <- dir(ProteinProphet, full.names = TRUE, pattern = "prot.xml$")
+#For merging and modifying the data
+protein <- c()
+for(x in ProteinProphet_files) 
+  {
+   doc <- xmlToList(x)
+   for (i in seq(3,length(doc)-1)) protein <- c(protein,doc[i]$protein_group$protein$.attrs['protein_name'])
+ }
+protein <- unique(protein)                                # protein is now a vector of all proteoforms
+probability <- list()
+for(x in ProteinProphet_files) 
+  {
+  doc <- xmlToList(x)
+  for (p in protein) probability[[x]][[p]] <- 0.9
+  for (i in seq(3,length(doc)-1)) probability[[x]][[doc[i]$protein_group$protein$.attrs['protein_name']]] <- doc[i]$protein_group$protein$.attrs['probability']
+ }
+# For creating matrix for data
+DF <- as.data.frame(sapply(probability, rbind), rownames <- protein)
+DM <- as.matrix(DF[,1:33])
+```
+## modify code
+```{r}
+require(devtools)
+df <- apply(DF,2,as.character)
+write.csv2(df,"D:/Spectral_library/fish_library/probe_fish29/fish_29.csv", row.names = protein, col.names = TRUE)
+```
+## For protein description 
+```{r}
+ProteinProphet<-"D:/Spectral_library/fish_library/probe_fish29/mzML"
+ProteinProphet_files <- dir(ProteinProphet, full.names = TRUE, pattern = "prot.xml$")
+#For merging and modifying the data
+protein <- c()
+for(x in ProteinProphet_files) 
+  {
+   doc <- xmlToList(x)
+   for (i in seq(3,length(doc)-1)) protein <- c(protein,doc[i]$protein_group$protein$annotation['protein_description'])
+ }
+protein <- unique(protein)                                # protein is now a vector of all proteoforms
+probability <- list()
+for(x in ProteinProphet_files) 
+  {
+  doc <- xmlToList(x)
+  for (p in protein) probability[[x]][[p]] <- 0
+  for (i in seq(3,length(doc)-1)) probability[[x]][[doc[i]$protein_group$protein$annotation['protein_description']]] <- doc[i]$protein_group$protein$.attrs['probability']
+ }
+# For creating matrix for data
+DF1 <- as.data.frame(sapply(probability, rbind), rownames <- protein)
+DM1 <- as.matrix(DF[,1:19])
+```
+## modify code
+```{r}
+require(devtools)
+df1 <- apply(DF1,2,as.character)
+write.csv2(df1,"D:/Spectral_library/2021_insect_library/out_inhouse/mzML/insect2.csv", row.names = protein, col.names = TRUE)
+```
+
+#Heatmap mapping 
+For renaming the coulmns with sample names
+```{r}
+View(df)
+hmap<-read.csv2(file = 'D:/Spectral_library/fish_library/probe_fish29/fish_29.csv', header = TRUE)
+colnames(hmap)[1]<-"protein"
+na1<-"D..Spectral_library.fish_library.probe_fish29.mzML.interact."
+na2<-".prot.xml"
+a<-str_remove(colnames(hmap), na1)
+b<-str_remove(colnames(hmap), na2)
+colnames(hmap)<-a
+colnames(hmap)<-b
+fishname <-read.delim2(file = 'D:/Spectral_library/fish_library/probe_fish29/fishnames.txt',header = FALSE, sep = "\t")
+colnames(hmap[2:34])<- fishname$V2
+a<-fishname$V2
+colnames(hmap)<-c("Protein","Gadus_morhua","Merluccius_merluccius","Pollachius_virens","Melanogrammus_aeglefinus", "Pollachius_pollachius","Molva_molva","Trisopterus_minutus","Trisopterus_esmarkii","Micromesistius_poutassou","Gadiculus_argenteus","Clupea_harengus","Scomber_scombrus","Trachurus_trachurus","Microstomus_kitt","Pleuronectes_platessa","Limanda_limanda","Lepidorhombus_whiffiagonis","Scophthalmus_maximus","Cyclopterus_lumpus","Maurolicus_muelleri","Ammodytes_marinus","Anarhichas_lupus","Argentina_sphyraena","Squalus_acanthias","Amblyraja_radiata","Callionymus_lyra","Argentina_silus","Merlangius_merlangus","Eutrigla_gurnardus")
+write.csv2(hmap,"D:/Spectral_library/fish_library/probe_fish29/renamedfish_29.csv")
+```
+
